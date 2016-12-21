@@ -13,13 +13,12 @@
 #express or implied. See the License for the specific language governing
 #permissions and limitations under the License.
 
-from __future__ import print_function
-
-import aws_kinesis_agg
 import google.protobuf.message
-import kpl_pb2
-import md5
+from . import kpl_pb2
+from hashlib import md5
 import threading
+
+from . import MAGIC, DIGEST_SIZE, MAX_BYTES_PER_RECORD
 
 
 def _calculate_varint_size(value):
@@ -48,7 +47,7 @@ def _calculate_varint_size(value):
             value = value >> 1
         
     #varints only use 7 bits of the byte for the actual value
-    num_varint_bytes = num_bits_needed / 7
+    num_varint_bytes = num_bits_needed // 7
     if num_bits_needed % 7 > 0:
         num_varint_bytes += 1
         
@@ -247,8 +246,8 @@ class AggRecord(object):
         '''Create a new empty aggregated record.'''
         
         self.agg_record = kpl_pb2.AggregatedRecord()
-        self._agg_partition_key = ''
-        self._agg_explicit_hash_key = ''
+        self._agg_partition_key = b''
+        self._agg_explicit_hash_key = b''
         self._agg_size_bytes = 0
         self.partition_keys = KeySet()
         self.explicit_hash_keys = KeySet()
@@ -265,7 +264,7 @@ class AggRecord(object):
         '''Returns:
             The current size in bytes of this message in its serialized form. (int)'''
         
-        return len(aws_kinesis_agg.MAGIC) + self._agg_size_bytes + aws_kinesis_agg.DIGEST_SIZE
+        return len(MAGIC) + self._agg_size_bytes + DIGEST_SIZE
     
     
     def _serialize_to_bytes(self):
@@ -276,11 +275,11 @@ class AggRecord(object):
         
         message_body = self.agg_record.SerializeToString()
         
-        md5_calc = md5.new()
+        md5_calc = md5()
         md5_calc.update(message_body)
         calculated_digest = md5_calc.digest()
         
-        return aws_kinesis_agg.MAGIC + message_body + calculated_digest
+        return MAGIC + message_body + calculated_digest
     
     
     def clear(self):
@@ -288,8 +287,8 @@ class AggRecord(object):
         reused just like a fresh instance of this object.'''
         
         self.agg_record = kpl_pb2.AggregatedRecord()
-        self._agg_partition_key = ''
-        self._agg_explicit_hash_key = ''
+        self._agg_partition_key = b''
+        self._agg_explicit_hash_key = b''
         self._agg_size_bytes = 0
         self.partition_keys.clear()
         self.explicit_hash_keys.clear()
@@ -393,22 +392,22 @@ class AggRecord(object):
         enough space (based on the defined Kinesis limits for a PutRecord call).
         
         Args:
-            partition_key - The partition key of the new user record to add (str)
-            explicit_hash_key - The explicit hash key of the new user record to add (str)
-            data - The raw data of the new user record to add (binary str)
+            partition_key - The partition key of the new user record to add (bytes)
+            explicit_hash_key - The explicit hash key of the new user record to add (bytes)
+            data - The raw data of the new user record to add (bytes)
         Returns:
             True if the new user record was successfully added to this
             aggregated record or false if this aggregated record is too full.'''
         
-        partition_key = str(partition_key).strip()
-        explicit_hash_key = str(explicit_hash_key).strip() if explicit_hash_key is not None else self._create_explicit_hash_key(partition_key)
+        partition_key = partition_key.strip()
+        explicit_hash_key = explicit_hash_key.strip() if explicit_hash_key is not None else self._create_explicit_hash_key(partition_key)
         
         #Validate new record size won't overflow max size for a PutRecordRequest
         size_of_new_record = self._calculate_record_size(partition_key, data, explicit_hash_key)
-        if size_of_new_record > aws_kinesis_agg.MAX_BYTES_PER_RECORD:
+        if size_of_new_record > MAX_BYTES_PER_RECORD:
             raise ValueError('Input record (PK=%s, EHK=%s, SizeBytes=%d) is too large to fit inside a single Kinesis record.' % 
                              (partition_key, explicit_hash_key, size_of_new_record))
-        elif self.get_size_bytes() + size_of_new_record > aws_kinesis_agg.MAX_BYTES_PER_RECORD:
+        elif self.get_size_bytes() + size_of_new_record > MAX_BYTES_PER_RECORD:
             return False
         
         record = self.agg_record.records.add()
@@ -446,15 +445,13 @@ class AggRecord(object):
         
         hash_key = 0
         
-        md5_calc = md5.new()
+        md5_calc = md5()
         md5_calc.update(partition_key)
         pk_digest = md5_calc.hexdigest()
         
-        for i in range(0, aws_kinesis_agg.DIGEST_SIZE):
+        for i in range(0, DIGEST_SIZE):
             p = int(pk_digest, 16)
             p << (16 - i - 1) * 8
             hash_key += p
         
-        return str(p)
-    
-    
+        return str(p).encode('latin-1')

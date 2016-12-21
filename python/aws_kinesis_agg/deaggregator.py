@@ -13,16 +13,15 @@
 #express or implied. See the License for the specific language governing
 #permissions and limitations under the License.
 
-from __future__ import print_function
-
-import aws_kinesis_agg
 import base64
 import collections
-import google.protobuf.message
-import kpl_pb2
-import md5
-import StringIO
+from hashlib import md5
+from io import StringIO
 import sys
+import google.protobuf.message
+from . import kpl_pb2
+
+from . import MAGIC, DIGEST_SIZE, MAX_BYTES_PER_RECORD
 
 
 def _create_user_record(ehks, pks, mr, r, sub_seq_num):
@@ -134,23 +133,23 @@ def iter_deaggregate_records(records):
         
         #Verify the magic header
         data_magic = None
-        if(len(decoded_data) >= len(aws_kinesis_agg.MAGIC)):
-            data_magic = decoded_data[:len(aws_kinesis_agg.MAGIC)]
+        if(len(decoded_data) >= len(MAGIC)):
+            data_magic = decoded_data[:len(MAGIC)]
         else:
             is_aggregated = False
         
-        decoded_data_no_magic = decoded_data[len(aws_kinesis_agg.MAGIC):]
+        decoded_data_no_magic = decoded_data[len(MAGIC):]
         
-        if aws_kinesis_agg.MAGIC != data_magic or len(decoded_data_no_magic) <= aws_kinesis_agg.DIGEST_SIZE:
+        if MAGIC != data_magic or len(decoded_data_no_magic) <= DIGEST_SIZE:
             is_aggregated = False
             
         if is_aggregated:            
             
             #verify the MD5 digest
-            message_digest = decoded_data_no_magic[-aws_kinesis_agg.DIGEST_SIZE:]
-            message_data = decoded_data_no_magic[:-aws_kinesis_agg.DIGEST_SIZE]
+            message_digest = decoded_data_no_magic[-DIGEST_SIZE:]
+            message_data = decoded_data_no_magic[:-DIGEST_SIZE]
             
-            md5_calc = md5.new()
+            md5_calc = md5()
             md5_calc.update(message_data)
             calculated_digest = md5_calc.digest()
             
