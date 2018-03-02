@@ -25,7 +25,7 @@ def read_file(filename):
 
 setup(
   name='aws_kinesis_agg_sps',
-  packages=['aws_kinesis_agg_sps'],
+  packages=['aws_kinesis_agg'],
   version='1.0.1',
   description='Python module to assist in taking advantage of the Kinesis message aggregation '
               'format for both aggregation and deaggregation.',
