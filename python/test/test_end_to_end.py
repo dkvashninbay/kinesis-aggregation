@@ -45,7 +45,7 @@ def create_kinesis_lambda_record(pk, ehk, data):
     }
 
 
-class EndToEndTest(unittest.TestCase):
+class TestEndToEnd(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -154,7 +154,3 @@ class EndToEndTest(unittest.TestCase):
                          'Intermediate and output EHK do not match.')
         self.assertEqual(input_data, output_data,
                          'Input and output record data does not match.')
-
-
-if __name__ == '__main__':
-    unittest.main()

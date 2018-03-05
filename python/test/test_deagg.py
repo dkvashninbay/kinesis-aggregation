@@ -13,7 +13,6 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from __future__ import print_function
 import aws_kinesis_agg.deaggregator as deagg
 import base64
 import json
@@ -45,7 +44,7 @@ kpl_generated_rec = {
 }
 
 
-class RecordDeaggregatorTest(unittest.TestCase):
+class TestRecordDeaggregator(unittest.TestCase):
 
     def setUp(self):
         pass
@@ -94,8 +93,3 @@ class RecordDeaggregatorTest(unittest.TestCase):
             actual_data = actual_record['data']
             self.assertEqual(decoded_data, actual_data,
                              'Deaggregated data does not match expected actual data.')
-
-
-if __name__ == '__main__':
-
-    unittest.main()

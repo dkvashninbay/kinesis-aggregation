@@ -12,13 +12,13 @@
 # on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
+import io
 
 from . import kpl_pb2, DIGEST_SIZE, MAGIC
 import base64
 import collections
 import google.protobuf.message
 import hashlib
-import six
 import sys
 
 
@@ -55,7 +55,7 @@ def _create_user_record(ehks, pks, mr, r, sub_seq_num):
     }
 
     # Copy all the metadata from the original record (except the data-specific stuff)
-    for key, value in six.iteritems(r):
+    for key, value in r.items():
         if key != 'kinesis':
             new_record[key] = value
 
@@ -73,7 +73,7 @@ def _get_error_string(r, message_data, ehks, pks, ar):
     
     return value - A detailed error string (str)"""
     
-    error_buffer = six.StringIO()
+    error_buffer = io.StringIO()
     
     error_buffer.write('Unexpected exception during deaggregation, record was:\n')
     error_buffer.write('PKS:\n')

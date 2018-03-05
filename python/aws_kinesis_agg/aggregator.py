@@ -13,11 +13,8 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-from __future__ import division
-
 from . import kpl_pb2, DIGEST_SIZE, MAX_BYTES_PER_RECORD, MAGIC
 import hashlib
-import six
 import threading
 
 
@@ -384,12 +381,12 @@ class AggRecord(object):
             True if the new user record was successfully added to this
             aggregated record or false if this aggregated record is too full."""
 
-        if isinstance(partition_key, six.string_types):
+        if isinstance(partition_key, str):
             partition_key_bytes = partition_key.encode('utf-8')
         else:
             partition_key_bytes = partition_key
 
-        if explicit_hash_key is not None and isinstance(explicit_hash_key, six.string_types):
+        if explicit_hash_key is not None and isinstance(explicit_hash_key, str):
             explicit_hash_key_bytes = explicit_hash_key.encode('utf-8')
         elif explicit_hash_key is None:
             explicit_hash_key_bytes = AggRecord._create_explicit_hash_key(partition_key_bytes)
@@ -397,7 +394,7 @@ class AggRecord(object):
         else:
             explicit_hash_key_bytes = explicit_hash_key
 
-        if isinstance(data, six.string_types):
+        if isinstance(data, str):
             data_bytes = data.encode('utf-8')
         else:
             data_bytes = data
