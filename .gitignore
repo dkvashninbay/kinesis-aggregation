@@ -5,3 +5,5 @@ python/.project
 
 python/.pydevproject
 java/KinesisTestConsumers/.classpath
+
+.idea
