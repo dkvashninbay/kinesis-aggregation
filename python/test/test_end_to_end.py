@@ -13,10 +13,11 @@
 # express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 
-import aws_kinesis_agg.aggregator as agg
-import aws_kinesis_agg.deaggregator as deagg
 import base64
 import unittest
+
+import aws_kinesis_agg.aggregator as agg
+import aws_kinesis_agg.deaggregator as deagg
 
 
 # See https://docs.aws.amazon.com/lambda/latest/dg/eventsources.html#eventsources-kinesis-streams
@@ -26,23 +27,19 @@ def create_kinesis_lambda_record(pk, ehk, data):
     return {
         "Records": [
             {
-              "eventID": "shardId-000000000000:49545115243490985018280067714973144582180062593244200961",
-              "eventVersion": "1.0",
-              "kinesis": {
-                "partitionKey": pk,
-                "explicitHashKey": ehk,
-                "data": base64.b64encode(data),
-                "kinesisSchemaVersion": "1.0",
-                "sequenceNumber": "49545115243490985018280067714973144582180062593244200961"
-              },
-              "invokeIdentityArn": 'identity-arn',
-              "eventName": "aws:kinesis:record",
-              "eventSourceARN": 'kinesis-event-arn',
-              "eventSource": "aws:kinesis",
-              "awsRegion": "us-east-1"
-            }
-        ]
-    }
+                "eventID": "shardId-000000000000:49545115243490985018280067714973144582180062593244200961",
+                "eventVersion": "1.0",
+                "kinesis": {
+                    "partitionKey": pk,
+                    "explicitHashKey": ehk,
+                    "data": base64.b64encode(data),
+                    "kinesisSchemaVersion": "1.0",
+                    "sequenceNumber": "49545115243490985018280067714973144582180062593244200961"},
+                "invokeIdentityArn": 'identity-arn',
+                "eventName": "aws:kinesis:record",
+                "eventSourceARN": 'kinesis-event-arn',
+                "eventSource": "aws:kinesis",
+                "awsRegion": "us-east-1"}]}
 
 
 class TestEndToEnd(unittest.TestCase):
@@ -80,14 +77,18 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(input_pk, intermediate_pk,
                          'Intermediate PK and input PK do not match.')
 
-        # No input EHK is specified, but calculating one should be deterministic based on PK
-        self.assertEqual('166672149269223421180636453361785199783724579696249764508579298334598714607',
-                         intermediate_ehk,
-                         'Calculated explicit hash key does not match.')
+        # No input EHK is specified, but calculating one should be
+        # deterministic based on PK
+        self.assertEqual(
+            '166672149269223421180636453361785199783724579696249764508579298334598714607',
+            intermediate_ehk,
+            'Calculated explicit hash key does not match.')
 
-        # NOTE: intermediate_data is a fully aggregated record, not just the raw input data at this point
+        # NOTE: intermediate_data is a fully aggregated record, not just the
+        # raw input data at this point
 
-        event = create_kinesis_lambda_record(intermediate_pk, intermediate_ehk, intermediate_data)
+        event = create_kinesis_lambda_record(
+            intermediate_pk, intermediate_ehk, intermediate_data)
         records = deagg.deaggregate_records(event['Records'])
 
         self.assertEqual(1, len(records))
@@ -131,14 +132,18 @@ class TestEndToEnd(unittest.TestCase):
         self.assertEqual(input_pk, intermediate_pk,
                          'Intermediate PK and input PK do not match.')
 
-        # No input EHK is specified, but calculating one should be deterministic based on PK
-        self.assertEqual('166672149269223421180636453361785199783724579696249764508579298334598714607',
-                         intermediate_ehk,
-                         'Calculated explicit hash key does not match.')
+        # No input EHK is specified, but calculating one should be
+        # deterministic based on PK
+        self.assertEqual(
+            '166672149269223421180636453361785199783724579696249764508579298334598714607',
+            intermediate_ehk,
+            'Calculated explicit hash key does not match.')
 
-        # NOTE: intermediate_data is a fully aggregated record, not just the raw input data at this point
+        # NOTE: intermediate_data is a fully aggregated record, not just the
+        # raw input data at this point
 
-        event = create_kinesis_lambda_record(intermediate_pk, intermediate_ehk, intermediate_data)
+        event = create_kinesis_lambda_record(
+            intermediate_pk, intermediate_ehk, intermediate_data)
         records = deagg.deaggregate_records(event['Records'])
 
         self.assertEqual(1, len(records))
